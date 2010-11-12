@@ -1,0 +1,20 @@
+<?php
+
+function qb_autoload($className) {
+  $path = drupal_get_path('module', 'qb');
+  $fileName = $path .'/'. $className .'.class.php';
+  if (file_exists($fileName)) {
+    require $fileName;
+  }
+}
+spl_autoload_register("qb_autoload");
+
+function qb_select($table, $alias = NULL, $options = array()) {
+  $query = new QBuilder;
+  $query->select($table, $alias, $options);
+  return $query;
+}
+
+function qb_or() {
+    return new QBuilderCondition('OR');
+}

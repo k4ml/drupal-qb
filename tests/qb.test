@@ -1,0 +1,20 @@
+<?php
+
+class QBuilderTest extends DrupalUnitTestCase {
+  function getInfo() {
+    return array(
+      'name' => t("QBuilder Unit Test"),
+      'description' => t("Unit Test QBuilder"),
+      'group' => t("Database"),
+    );
+  }
+
+  function testBasicCondition() {
+    $query = qb_select("users", "u")
+      ->condition("u.status", 1);
+    $sql = "SELECT * FROM users u WHERE ( u.status = '1' )";
+    $message = t("Should display valid SQL query") . ":\n";
+    $message .= $query->sql();
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
+  }
+}
