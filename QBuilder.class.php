@@ -91,14 +91,25 @@ class QBuilder {
 
     public function join($table, $alias = NULL, $condition, $arguments = array()) {
         if (!$alias) {
-            $table = $table .' '. $table;
+            $alias = $table;
+            $count = 1;
+            while (in_array($alias, array_keys($this->joins))) {
+                $alias = $alias .'_'. $count;
+                $count++;
+            }
         }
-        else {
-            $table = $table .' '. $alias;
+        if (in_array($alias, array_keys($this->joins))) {
+            throw(new Exception("Alias $alias already exists"));
         }
-        $this->joins[] = " ". $table ." ON (". $condition .")";
-        return $this;
 
+        $this->joins[$alias] = array(
+            'type' => 'INNER',
+            'table' => $table,
+            'alias' => $alias,
+            'condition' => $condition,
+        );
+
+        return $this;
     }
 
     public function condition($field, $value = NULL, $operator = '=') {
@@ -149,9 +160,9 @@ class QBuilder {
     }
 
     function compileJoin() {
-        $join_fragments = implode(" INNER JOIN", $this->joins);
-        if (count($this->joins) == 1) {
-            return " INNER JOIN". $join_fragments;
+        $join_fragments = '';
+        foreach ($this->joins as $_join) {
+            $join_fragments .= " ". $_join['type'] .' JOIN '. $_join['table'] .' '. $_join['alias'] .' ON ('. $_join['condition'] .')';
         }
         return $join_fragments;
     }
