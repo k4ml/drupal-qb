@@ -109,9 +109,13 @@ class QBuilder {
     }
 
     public function getArguments() {
+        $arguments = array();
         $this->arguments = array();
         foreach ($this->wheres as $condition) {
-            $this->arguments[] = $condition->getArguments();
+            $arguments = $condition->getArguments();
+            foreach ($arguments as $argument) {
+                $this->arguments[] = $argument;
+            }
         }
         return $this->arguments;
     }
