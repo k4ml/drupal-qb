@@ -50,7 +50,13 @@ class QBuilderTest extends DrupalUnitTestCase {
     $message = $this->alert("with placeholders", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
     $message = "Number of placeholders must be 2, get ". count($query->getArguments());
-    $this->assertEqual(count($query->getArguments()), 2, $message);
+
+    $arguments = $query->getArguments();
+    $this->assertEqual(count($arguments), 2, $message);
+
+    foreach ($arguments as $argument) {
+      $this->assertTrue(is_scalar($argument), "Argument must be scalar");
+    }
   }
 
   function alert($message, $expected, $result) {
