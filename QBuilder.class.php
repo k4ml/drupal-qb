@@ -74,6 +74,7 @@ class QBuilderCondition {
 class QBuilder {
     protected $base_table = '';
     protected $tables = array();
+    protected $joins = array();
     protected $wheres = array();
     protected $arguments = array();
 
@@ -86,6 +87,18 @@ class QBuilder {
         }
         $this->base_table = $table;
         return $this;
+    }
+
+    public function join($table, $alias = NULL, $condition, $arguments = array()) {
+        if (!$alias) {
+            $table = $table .' '. $table;
+        }
+        else {
+            $table = $table .' '. $alias;
+        }
+        $this->joins[] = " ". $table ." ON (". $condition .")";
+        return $this;
+
     }
 
     public function condition($field, $value = NULL, $operator = '=') {
@@ -102,6 +115,7 @@ class QBuilder {
 
     public function sql() {
         $sql = "SELECT * FROM ". $this->base_table .
+            $this->compileJoin() .
             " WHERE".
             $this->compile_where();
 
@@ -132,6 +146,14 @@ class QBuilder {
             $count++;
         }
         return $wheres;
+    }
+
+    function compileJoin() {
+        $join_fragments = implode(" INNER JOIN", $this->joins);
+        if (count($this->joins) == 1) {
+            return " INNER JOIN". $join_fragments;
+        }
+        return $join_fragments;
     }
 
     public function __toString() {
