@@ -3,6 +3,7 @@
 class QBuilderCondition {
     protected $conjunction = 'AND';
     protected $wheres = array();
+    protected $arguments = array();
 
     public function __construct($conjunction = 'AND') {
         $this->conjunction = $conjunction;
@@ -13,7 +14,14 @@ class QBuilderCondition {
             $this->wheres[] = $field;
         }
         else {
-            $this->wheres[] = $field .' '. $operator .' '. "'$value'";
+            if (is_array($value)) {
+                $this->arguments[] = $value[1];
+                $value = $this->formatValue($value[1], $value[0]);
+            }
+            else {
+                $value = $this->formatValue($value);
+            }
+            $this->wheres[] = $field .' '. $operator .' '. "$value";
         }
         return $this;
     }
@@ -42,12 +50,32 @@ class QBuilderCondition {
     public function get_conjunction() {
         return $this->conjunction;
     }
+
+    public function getArguments() {
+        return $this->arguments;
+    }
+
+    protected function formatValue($value, $placeholder = NULL) {
+        $maps = array(
+            '%d' => $placeholder,
+            '%s' => "'$placeholder'",
+        );
+        if ($placeholder) {
+            return $maps[$placeholder];
+        }
+
+        if (is_int($value)) {
+            return $value;
+        }
+        return "'". db_escape_string($value) ."'";
+    }
 }
 
 class QBuilder {
     protected $base_table = '';
     protected $tables = array();
     protected $wheres = array();
+    protected $arguments = array();
 
     public function select($table, $alias = NULL, $options = array()) {
         if (!$alias) {
@@ -78,6 +106,14 @@ class QBuilder {
             $this->compile_where();
 
         return $sql;
+    }
+
+    public function getArguments() {
+        $this->arguments = array();
+        foreach ($this->wheres as $condition) {
+            $this->arguments[] = $condition->getArguments();
+        }
+        return $this->arguments;
     }
 
     protected function compile_where() {
