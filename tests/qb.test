@@ -16,5 +16,26 @@ class QBuilderTest extends DrupalUnitTestCase {
     $message = t("Should display valid SQL query") . ":\n";
     $message .= $query->sql();
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
+
+    $query = qb_select("users", "u")
+      ->condition("u.status", 1)
+      ->condition("u.name", 'admin');
+    $sql = "SELECT * FROM users u WHERE ( u.status = '1' ) AND ( u.name = 'admin' )";
+    $message = t("Should display valid SQL query") . ":\n";
+    $message .= $query->sql();
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
+  }
+
+  function testOrCondition() {
+    $query = qb_select("users", "u")
+      ->condition("u.status", 1)
+      ->condition(qb_or()
+        ->condition('u.name', 'admin')
+        ->condition('u.name', 'root')
+      );
+    $sql = "SELECT * FROM users u WHERE ( u.status = '1' ) AND ( u.name = 'admin' OR u.name = 'root' )";
+    $message = t("Should display valid SQL query") . ":\n";
+    $message .= $query->sql();
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
   }
 }
