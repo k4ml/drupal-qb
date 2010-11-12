@@ -38,10 +38,19 @@ class QBuilderTest extends DrupalUnitTestCase {
 
   function testBasicPlaceholders() {
     $query = qb_select("users", "u")
-      ->condition("u.status", array('%d' => 1));
+      ->condition("u.status", array('%d', 1));
     $sql = "SELECT * FROM users u WHERE ( u.status = %d )";
     $message = $this->alert("with placeholders", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
+
+    $query = qb_select("users", "u")
+      ->condition("u.status", array('%d', 1))
+      ->condition("u.name", array('%s', 'admin'));
+    $sql = "SELECT * FROM users u WHERE ( u.status = %d ) AND ( u.name = '%s' )";
+    $message = $this->alert("with placeholders", $sql, $query->sql());
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
+    $message = "Number of placeholders must be 2, get ". count($query->getArguments());
+    $this->assertEqual(count($query->getArguments()), 2, $message);
   }
 
   function alert($message, $expected, $result) {
