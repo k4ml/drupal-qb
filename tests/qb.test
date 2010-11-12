@@ -59,6 +59,15 @@ class QBuilderTest extends DrupalUnitTestCase {
     }
   }
 
+  function testJoin() {
+    $query = qb_select("users", "u")
+      ->join("users_tree", "ut", "u.uid = ut.uid")
+      ->condition("u.status", array('%d', 1));
+    $sql = "SELECT * FROM users u INNER JOIN users_tree ut ON (u.uid = ut.uid) WHERE ( u.status = %d )";
+    $message = $this->alert("with join", $sql, $query->sql());
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
+  }
+
   function alert($message, $expected, $result) {
     return t("Should display valid SQL query") ." ". $message .': '. $expected .' Display instead: '. $result;
   }
