@@ -98,4 +98,12 @@ class QBuilderTest extends DrupalUnitTestCase {
     $message = $this->alert("using LIKE operator", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
   }
+
+  function testOrderBy() {
+    $query = qb_select("users", "u")
+      ->orderBy("u.uid", "DESC");
+    $sql = "SELECT * FROM users u ORDER BY u.uid DESC";
+    $message = $this->alert("with ORDER BY clause", $sql, $query->sql());
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
+  }
 }
