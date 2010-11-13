@@ -9,7 +9,9 @@ $query = qb_select("users", "u")
 $result = db_query($query->sql(), $query->getArguments());
 </pre>
 
+Please take a look in `tests/qb.test` for more usage example.
+
 ## Reason
-Drupal 7 database API already included query builder and it's been backported to Drupal 6 as [dbtng][1] module. The problem with the module is it created a new database connection instead of using existing one. This query builder try to follow the dbtng API as close as possible.
+Drupal 7 database API already included query builder and it's been backported to Drupal 6 as [dbtng][1] module. The problem with the module is it created a new database connection instead of using existing one. This query builder try to follow the [dbtng][1] API as close as possible.
 
 [1]:http://drupal.org/project/dbtng
