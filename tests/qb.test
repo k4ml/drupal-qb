@@ -90,4 +90,12 @@ class QBuilderTest extends DrupalUnitTestCase {
     $message = $this->alert("fields with different alias", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
   }
+
+  function testLikeOperator() {
+    $query = qb_select("users", "u")
+      ->condition("u.name", "ad%%", "LIKE");
+    $sql = "SELECT * FROM users u WHERE ( u.name LIKE 'ad%%' )";
+    $message = $this->alert("using LIKE operator", $sql, $query->sql());
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
+  }
 }
