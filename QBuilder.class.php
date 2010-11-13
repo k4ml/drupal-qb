@@ -102,7 +102,9 @@ class QBuilder {
     }
 
     public function addExpression($expression, $alias) {
+        $expression = $expression ." AS ". $alias;
         $this->fields('EXPRESSION', array($expression));
+        return $this;
     }
 
     public function join($table, $alias = NULL, $condition, $arguments = array()) {
@@ -176,6 +178,10 @@ class QBuilder {
         $to_select = '';
         foreach ($this->fields as $alias => $fields) {
             foreach ($fields as $field) {
+                if ($alias == 'EXPRESSION') {
+                    $to_select .= $field;
+                    continue;
+                }
                 $to_select .= $alias .".". $field .", ";
             }
         }

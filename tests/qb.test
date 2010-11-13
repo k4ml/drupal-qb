@@ -137,4 +137,21 @@ class QBuilderTest extends DrupalUnitTestCase {
     $message = $this->alert("with multiple ORDER BY clause", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
   }
+
+  function testExpression() {
+    $query = qb_select("users", "u")
+      ->fields('u', array('name'))
+      ->addExpression("COUNT(u.uid)", "user_count");
+    $sql = "SELECT u.name, COUNT(u.uid) AS user_count FROM users u";
+    $message = $this->alert("with COUNT expression", $sql, $query->sql());
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
+
+    $query = qb_select("users", "u")
+      ->fields('u', array('name'))
+      ->addExpression("length(ut.tree_id) - length(replace(tree_id, '.', ''))", "level")
+      ->join("users_tree", "ut", "u.uid = ut.uid");
+    $sql = "SELECT u.name, length(ut.tree_id) - length(replace(tree_id, '.', '')) AS level FROM users u INNER JOIN users_tree ut ON (u.uid = ut.uid)";
+    $message = $this->alert("with complex expression", $sql, $query->sql());
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
+  }
 }
