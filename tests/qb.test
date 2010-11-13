@@ -71,4 +71,14 @@ class QBuilderTest extends DrupalUnitTestCase {
   function alert($message, $expected, $result) {
     return t("Should display valid SQL query") ." ". $message .': '. $expected .' Display instead: '. $result;
   }
+
+  function testSelectFields() {
+    $query = qb_select("users", "u")
+      ->fields('u', array('name', 'mail', 'status'))
+      ->join("users_tree", "ut", "u.uid = ut.uid")
+      ->condition("u.status", array('%d', 1));
+    $sql = "SELECT u.name, u.mail, u.status FROM users u INNER JOIN users_tree ut ON (u.uid = ut.uid) WHERE ( u.status = %d )";
+    $message = $this->alert("with fields", $sql, $query->sql());
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
+  }
 }
