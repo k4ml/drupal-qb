@@ -200,14 +200,14 @@ class QBuilder {
     }
 
     function compileOrderBy() {
-        $order_by = '';
         if (empty($this->order_fields)) {
             return '';
         }
+        $order_by = ' ORDER BY ';
         foreach ($this->order_fields as $field) {
             $order_by .= $field .', ';
         }
-        $order_by = trim(trim($order_by), ",");
+        $order_by = rtrim(rtrim($order_by), ",");
         return $order_by;
     }
 
