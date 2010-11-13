@@ -79,6 +79,7 @@ class QBuilder {
     protected $arguments = array();
     protected $fields = array();
     protected $order_fields = array();
+    protected $group_fields = array();
 
     public function select($table, $alias = NULL, $options = array()) {
         if (!$alias) {
@@ -147,6 +148,11 @@ class QBuilder {
         return $this;
     }
 
+    public function groupBy($field) {
+        $this->group_fields[] = $field;
+        return $this;
+    }
+
     public function sql() {
         if (empty($this->fields)) {
             $fields = '*';
@@ -157,6 +163,7 @@ class QBuilder {
         $sql = "SELECT $fields FROM ". $this->base_table .
             $this->compileJoin() .
             $this->compile_where() .
+            $this->compileGroupBy() .
             $this->compileOrderBy();
 
         return $sql;
@@ -224,6 +231,13 @@ class QBuilder {
         }
         $order_by = rtrim(rtrim($order_by), ",");
         return $order_by;
+    }
+
+    function compileGroupBy() {
+        if (empty($this->group_fields)) {
+            return '';
+        }
+        return " GROUP BY " .implode(" ,", $this->group_fields);
     }
 
     function formatSql() {

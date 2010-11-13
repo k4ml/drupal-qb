@@ -141,8 +141,9 @@ class QBuilderTest extends DrupalUnitTestCase {
   function testExpression() {
     $query = qb_select("users", "u")
       ->fields('u', array('name'))
-      ->addExpression("COUNT(u.uid)", "user_count");
-    $sql = "SELECT u.name, COUNT(u.uid) AS user_count FROM users u";
+      ->addExpression("COUNT(u.uid)", "user_count")
+      ->groupBy('u.name');
+    $sql = "SELECT u.name, COUNT(u.uid) AS user_count FROM users u GROUP BY u.name";
     $message = $this->alert("with COUNT expression", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
 
