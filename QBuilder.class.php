@@ -209,6 +209,15 @@ class QBuilder {
         return $order_by;
     }
 
+    function formatSql() {
+        $sql = $this->sql();
+        $sql = str_replace("FROM", "\nFROM", $sql);
+        $sql = str_replace("INNER JOIN", "\n  INNER JOIN", $sql);
+        $sql = str_replace("WHERE", "\nWHERE", $sql);
+        $sql = str_replace("AND", "\n  AND", $sql);
+        return $sql;
+    }
+
     public function __toString() {
         return $this->sql();
     }
