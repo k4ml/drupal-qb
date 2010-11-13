@@ -145,7 +145,6 @@ class QBuilder {
         }
         $sql = "SELECT $fields FROM ". $this->base_table .
             $this->compileJoin() .
-            " WHERE".
             $this->compile_where() .
             $this->compileOrderBy();
 
@@ -176,7 +175,10 @@ class QBuilder {
     }
 
     protected function compile_where() {
-        $wheres = '';
+        if (empty($this->wheres)) {
+            return '';
+        }
+        $wheres = ' WHERE';
         $count = 0;
         foreach ($this->wheres as $where) {
             if ($count > 0) {
