@@ -96,6 +96,15 @@ class QBuilderTest extends DrupalUnitTestCase {
     $sql = "SELECT u.name, u.mail, u.status, ut.tree_id, ut.parent_uid FROM users u INNER JOIN users_tree ut ON (u.uid = ut.uid) WHERE ( u.status = %d )";
     $message = $this->alert("fields with different alias", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
+
+    $query = qb_select("users", "u")
+      ->fields('u', array('name'))
+      ->fields('u', array('mail', 'status'))
+      ->join("users_tree", "ut", "u.uid = ut.uid")
+      ->condition("u.status", array('%d', 1));
+    $sql = "SELECT u.name, u.mail, u.status FROM users u INNER JOIN users_tree ut ON (u.uid = ut.uid) WHERE ( u.status = %d )";
+    $message = $this->alert("calling fields multiple time with same alias", $sql, $query->sql());
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
   }
 
   function testLikeOperator() {
