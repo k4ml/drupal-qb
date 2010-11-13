@@ -104,6 +104,14 @@ class QBuilderTest extends DrupalUnitTestCase {
     $sql = "SELECT * FROM users u WHERE ( u.name LIKE 'ad%%' )";
     $message = $this->alert("using LIKE operator", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
+
+    $query = qb_select("users", "u")
+      ->condition("u.name", array('%s', "ad%"), "LIKE");
+    $sql = "SELECT * FROM users u WHERE ( u.name LIKE '%s' )";
+    $message = $this->alert("using LIKE operator with placeholder", $sql, $query->sql());
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
+    $message = "Arguments must be array('ad%')";
+    $this->assertEqual($query->getArguments(), array('ad%'), $message);
   }
 
   function testOrderBy() {
@@ -111,6 +119,13 @@ class QBuilderTest extends DrupalUnitTestCase {
       ->orderBy("u.uid", "DESC");
     $sql = "SELECT * FROM users u ORDER BY u.uid DESC";
     $message = $this->alert("with ORDER BY clause", $sql, $query->sql());
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
+
+    $query = qb_select("users", "u")
+      ->orderBy("u.uid", "DESC")
+      ->orderBy("u.name");
+    $sql = "SELECT * FROM users u ORDER BY u.uid DESC, u.name ASC";
+    $message = $this->alert("with multiple ORDER BY clause", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
   }
 }
