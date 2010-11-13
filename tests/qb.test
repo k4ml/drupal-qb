@@ -168,12 +168,19 @@ class QBuilderTest extends DrupalUnitTestCase {
     $query = qb_select($members, 'members')
       ->fields("members", array("level"))
       ->addExpression("COUNT(members.uid)", "user_count")
-      ->condition("members.level", 0, '<>')
+      ->condition("members.level", array("%d", 2), '<>')
       ->groupBy("members.level")
       ->orderBy("members.level");
-    $sql = "SELECT members.level, COUNT(members.uid) AS user_count FROM (SELECT uv.uid, uv.name, uv.tree_id, length(uv.tree_id) - length(replace(uv.tree_id, '.', '')) AS level FROM users_view uv WHERE ( uv.tree_id LIKE '%s' ) AND ( uv.uid <> %d ) AND ( uv.status = 1 ) ORDER BY uv.tree_id ASC) members WHERE ( members.level <> 0 ) GROUP BY members.level ORDER BY members.level ASC";
+    $sql = "SELECT members.level, COUNT(members.uid) AS user_count FROM (SELECT uv.uid, uv.name, uv.tree_id, length(uv.tree_id) - length(replace(uv.tree_id, '.', '')) AS level FROM users_view uv WHERE ( uv.tree_id LIKE '%s' ) AND ( uv.uid <> %d ) AND ( uv.status = 1 ) ORDER BY uv.tree_id ASC) members WHERE ( members.level <> %d ) GROUP BY members.level ORDER BY members.level ASC";
     $message = $this->alert("with sub select and complex expression", $sql, $query->sql());
     $message .= " ". strlen(trim($sql)) . " ". strlen(trim($query->sql()));
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
+    $arguments = array(
+      '0001.0002.%',
+      1,
+      2,
+    );
+    $message = $this->alert('Arguments: ', print_r($arguments, TRUE), print_r($query->getArguments(), TRUE));
+    $this->assertEqual($query->getArguments(), $arguments, $message);
   }
 }

@@ -87,6 +87,7 @@ class QBuilder {
         if ($table instanceof QBuilder) {
             $this->base_table = $table;
             $this->base_table->name = $alias;
+            $this->addArguments($table->getArguments());
             return $this;
         }
         if (!$alias) {
@@ -141,11 +142,13 @@ class QBuilder {
     public function condition($field, $value = NULL, $operator = '=') {
         if ($field instanceof QBuilderCondition) {
             $this->wheres[] = $field;
+            $this->addArguments($field->getArguments());
         }
         else {
             $condition = new QBuilderCondition;
             $condition->condition($field, $value, $operator);
             $this->wheres[] = $condition;
+            $this->addArguments($condition->getArguments());
         }
         return $this;
     }
@@ -184,15 +187,13 @@ class QBuilder {
     }
 
     public function getArguments() {
-        $arguments = array();
-        $this->arguments = array();
-        foreach ($this->wheres as $condition) {
-            $arguments = $condition->getArguments();
-            foreach ($arguments as $argument) {
-                $this->arguments[] = $argument;
-            }
-        }
         return $this->arguments;
+    }
+
+    protected function addArguments($arguments) {
+        foreach ($arguments as $argument) {
+            $this->arguments[] = $argument;
+        }
     }
 
     protected function compileFields() {
