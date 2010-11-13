@@ -78,6 +78,7 @@ class QBuilder {
     protected $wheres = array();
     protected $arguments = array();
     protected $fields = array();
+    protected $order_fields = array();
 
     public function select($table, $alias = NULL, $options = array()) {
         if (!$alias) {
@@ -130,6 +131,11 @@ class QBuilder {
         return $this;
     }
 
+    public function orderBy($field, $order = 'ASC') {
+        $this->order_fields[] = $field .' '. $order;
+        return $this;
+    }
+
     public function sql() {
         if (empty($this->fields)) {
             $fields = '*';
@@ -140,7 +146,8 @@ class QBuilder {
         $sql = "SELECT $fields FROM ". $this->base_table .
             $this->compileJoin() .
             " WHERE".
-            $this->compile_where();
+            $this->compile_where() .
+            $this->compileOrderBy();
 
         return $sql;
     }
@@ -188,6 +195,18 @@ class QBuilder {
             $join_fragments .= " ". $_join['type'] .' JOIN '. $_join['table'] .' '. $_join['alias'] .' ON ('. $_join['condition'] .')';
         }
         return $join_fragments;
+    }
+
+    function compileOrderBy() {
+        $order_by = '';
+        if (empty($this->order_fields)) {
+            return '';
+        }
+        foreach ($this->order_fields as $field) {
+            $order_by .= $field .', ';
+        }
+        $order_by = trim(trim($order_by), ",");
+        return $order_by;
     }
 
     public function __toString() {
