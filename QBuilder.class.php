@@ -77,6 +77,7 @@ class QBuilder {
     protected $joins = array();
     protected $wheres = array();
     protected $arguments = array();
+    protected $fields = array();
 
     public function select($table, $alias = NULL, $options = array()) {
         if (!$alias) {
@@ -86,6 +87,11 @@ class QBuilder {
             $table = $table .' '. $alias;
         }
         $this->base_table = $table;
+        return $this;
+    }
+
+    public function fields($alias, $fields = array()) {
+        $this->fields[$alias] = $fields;
         return $this;
     }
 
@@ -125,7 +131,13 @@ class QBuilder {
     }
 
     public function sql() {
-        $sql = "SELECT * FROM ". $this->base_table .
+        if (empty($this->fields)) {
+            $fields = '*';
+        }
+        else {
+            $fields = $this->compileFields();
+        }
+        $sql = "SELECT $fields FROM ". $this->base_table .
             $this->compileJoin() .
             " WHERE".
             $this->compile_where();
@@ -143,6 +155,17 @@ class QBuilder {
             }
         }
         return $this->arguments;
+    }
+
+    protected function compileFields() {
+        $to_select = '';
+        foreach ($this->fields as $alias => $fields) {
+            foreach ($fields as $field) {
+                $to_select .= $alias .".". $field .", ";
+            }
+        }
+        $to_select = trim(trim($to_select), ",");
+        return $to_select;
     }
 
     protected function compile_where() {
