@@ -9,6 +9,13 @@ class QBuilderTest extends DrupalUnitTestCase {
     );
   }
 
+  function testBasicQuery() {
+    $query = qb_select("users", "u");
+    $sql = "SELECT * FROM users u";
+    $message = $this->alert('', $sql, $query->sql());
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
+  }
+
   function testBasicCondition() {
     $query = qb_select("users", "u")
       ->condition("u.status", 1);
