@@ -155,4 +155,25 @@ class QBuilderTest extends DrupalUnitTestCase {
     $message = $this->alert("with complex expression", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
   }
+
+  function testSubSelect() {
+    $members = qb_select("users_view", "uv")
+      ->fields('uv', array('uid', 'name', 'tree_id'))
+      ->addExpression("length(uv.tree_id) - length(replace(uv.tree_id, '.', ''))", "level")
+      ->condition("uv.tree_id", array('%s', '0001.0002.%'), 'LIKE')
+      ->condition("uv.uid", array('%d', 1), '<>')
+      ->condition("uv.status", 1)
+      ->orderBy("uv.tree_id");
+
+    $query = qb_select($members, 'members')
+      ->fields("members", array("level"))
+      ->addExpression("COUNT(members.uid)", "user_count")
+      ->condition("members.level", 0, '<>')
+      ->groupBy("members.level")
+      ->orderBy("members.level");
+    $sql = "SELECT members.level, COUNT(members.uid) AS user_count FROM (SELECT uv.uid, uv.name, uv.tree_id, length(uv.tree_id) - length(replace(uv.tree_id, '.', '')) AS level FROM users_view uv WHERE ( uv.tree_id LIKE '%s' ) AND ( uv.uid <> %d ) AND ( uv.status = 1 ) ORDER BY uv.tree_id ASC) members WHERE ( members.level <> 0 ) GROUP BY members.level ORDER BY members.level ASC";
+    $message = $this->alert("with sub select and complex expression", $sql, $query->sql());
+    $message .= " ". strlen(trim($sql)) . " ". strlen(trim($query->sql()));
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
+  }
 }

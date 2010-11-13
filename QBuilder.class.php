@@ -81,7 +81,14 @@ class QBuilder {
     protected $order_fields = array();
     protected $group_fields = array();
 
+    public $name = '';
+
     public function select($table, $alias = NULL, $options = array()) {
+        if ($table instanceof QBuilder) {
+            $this->base_table = $table;
+            $this->base_table->name = $alias;
+            return $this;
+        }
         if (!$alias) {
             $table = $table .' '. $table;
         }
@@ -160,7 +167,14 @@ class QBuilder {
         else {
             $fields = $this->compileFields();
         }
-        $sql = "SELECT $fields FROM ". $this->base_table .
+        if ($this->base_table instanceof QBuilder) {
+            $table = $this->base_table->sql();
+            $table = "(". $table .") ". $this->base_table->name ;
+        }
+        else {
+            $table = $this->base_table;
+        }
+        $sql = "SELECT $fields FROM ". $table .
             $this->compileJoin() .
             $this->compile_where() .
             $this->compileGroupBy() .
