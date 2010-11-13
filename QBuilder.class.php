@@ -92,8 +92,17 @@ class QBuilder {
     }
 
     public function fields($alias, $fields = array()) {
-        $this->fields[$alias] = $fields;
+        if (isset($this->fields[$alias])) {
+            $this->fields[$alias] = array_merge($this->fields[$alias], $fields);
+        }
+        else {
+            $this->fields[$alias] = $fields;
+        }
         return $this;
+    }
+
+    public function addExpression($expression, $alias) {
+        $this->fields('EXPRESSION', array($expression));
     }
 
     public function join($table, $alias = NULL, $condition, $arguments = array()) {
