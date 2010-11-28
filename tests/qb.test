@@ -10,50 +10,62 @@ class QBuilderTest extends DrupalUnitTestCase {
   }
 
   function testBasicQuery() {
-    $query = qb_select("users", "u");
+    $query = qb_select()->from("users", 'u');
     $sql = "SELECT * FROM users u";
+    $message = $this->alert('', $sql, $query->sql());
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
+
+    $query = qb_select('*')->from("users", 'u');
+    $sql = "SELECT * FROM users u";
+    $message = $this->alert('', $sql, $query->sql());
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
+
+    $query = qb_select('u', array('name', 'status'))->from("users", 'u');
+    $sql = "SELECT u.name, u.status FROM users u";
     $message = $this->alert('', $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
   }
 
   function testBasicCondition() {
-    $query = qb_select("users", "u")
-      ->condition("u.status", 1);
-    $sql = "SELECT * FROM users u WHERE ( u.status = 1 )";
+    $query = qb_select()
+      ->from("users", "u")
+      ->where("u.status = 1");
+    $sql = "SELECT * FROM users u WHERE u.status = 1";
     $message = $this->alert('', $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
 
-    $query = qb_select("users", "u")
-      ->condition("u.status", 1)
-      ->condition("u.name", 'admin');
-    $sql = "SELECT * FROM users u WHERE ( u.status = 1 ) AND ( u.name = 'admin' )";
+    $query = qb_select()
+      ->from("users", "u")
+      ->where("u.status = 1")
+      ->where("u.name = 'admin'");
+    $sql = "SELECT * FROM users u WHERE u.status = 1 AND u.name = 'admin'";
     $message = $this->alert('', $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
   }
 
   function testOrCondition() {
-    $query = qb_select("users", "u")
-      ->condition("u.status", 1)
-      ->condition(qb_or()
-        ->condition('u.name', 'admin')
-        ->condition('u.name', 'root')
-      );
-    $sql = "SELECT * FROM users u WHERE ( u.status = 1 ) AND ( u.name = 'admin' OR u.name = 'root' )";
+    $query = qb_select()
+      ->from("users", "u")
+      ->where("u.status = 1")
+      ->where("(u.name = 'admin' OR u.name = 'root')");
+    $sql = "SELECT * FROM users u WHERE u.status = 1 AND (u.name = 'admin' OR u.name = 'root')";
     $message = $this->alert('', $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
   }
 
   function testBasicPlaceholders() {
-    $query = qb_select("users", "u")
-      ->condition("u.status", array('%d', 1));
-    $sql = "SELECT * FROM users u WHERE ( u.status = %d )";
+    $query = qb_select()
+      ->from("users", "u")
+      ->where("u.status = %d", array(1));
+    $sql = "SELECT * FROM users u WHERE u.status = %d";
     $message = $this->alert("with placeholders", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
 
-    $query = qb_select("users", "u")
-      ->condition("u.status", array('%d', 1))
-      ->condition("u.name", array('%s', 'admin'));
-    $sql = "SELECT * FROM users u WHERE ( u.status = %d ) AND ( u.name = '%s' )";
+    $query = qb_select()
+      ->from("users", "u")
+      ->where("u.status = %d", array(1))
+      ->where("u.name = '%s'", array('admin'));
+    $sql = "SELECT * FROM users u WHERE u.status = %d AND u.name = '%s'";
     $message = $this->alert("with placeholders", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
     $message = "Number of placeholders must be 2, get ". count($query->getArguments());
@@ -61,16 +73,16 @@ class QBuilderTest extends DrupalUnitTestCase {
     $arguments = $query->getArguments();
     $this->assertEqual(count($arguments), 2, $message);
 
-    foreach ($arguments as $argument) {
-      $this->assertTrue(is_scalar($argument), "Argument must be scalar");
-    }
+    $message = $this->alert("with arguments", array(1, 'admin'), $arguments);
+    $this->assertEqual($arguments, array(1, 'admin'), $message);
   }
 
   function testJoin() {
-    $query = qb_select("users", "u")
+    $query = qb_select()
+      ->from("users", "u")
       ->join("users_tree", "ut", "u.uid = ut.uid")
-      ->condition("u.status", array('%d', 1));
-    $sql = "SELECT * FROM users u INNER JOIN users_tree ut ON (u.uid = ut.uid) WHERE ( u.status = %d )";
+      ->where("u.status = %d", array(1));
+    $sql = "SELECT * FROM users u INNER JOIN users_tree ut ON (u.uid = ut.uid) WHERE u.status = %d";
     $message = $this->alert("with join", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
   }
@@ -80,43 +92,46 @@ class QBuilderTest extends DrupalUnitTestCase {
   }
 
   function testSelectFields() {
-    $query = qb_select("users", "u")
-      ->fields('u', array('name', 'mail', 'status'))
+    $query = qb_select('u', array('name', 'mail', 'status'))
+      ->from("users", "u")
       ->join("users_tree", "ut", "u.uid = ut.uid")
-      ->condition("u.status", array('%d', 1));
-    $sql = "SELECT u.name, u.mail, u.status FROM users u INNER JOIN users_tree ut ON (u.uid = ut.uid) WHERE ( u.status = %d )";
+      ->where("u.status = %d", array(1));
+    $sql = "SELECT u.name, u.mail, u.status FROM users u INNER JOIN users_tree ut ON (u.uid = ut.uid) WHERE u.status = %d";
     $message = $this->alert("with fields", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
 
-    $query = qb_select("users", "u")
-      ->fields('u', array('name', 'mail', 'status'))
+    $query = qb_select('u', array('name', 'mail', 'status'))
       ->fields('ut', array('tree_id', 'parent_uid'))
+      ->from("users", "u")
       ->join("users_tree", "ut", "u.uid = ut.uid")
-      ->condition("u.status", array('%d', 1));
-    $sql = "SELECT u.name, u.mail, u.status, ut.tree_id, ut.parent_uid FROM users u INNER JOIN users_tree ut ON (u.uid = ut.uid) WHERE ( u.status = %d )";
+      ->where("u.status = %d", array(1));
+    $sql = "SELECT u.name, u.mail, u.status, ut.tree_id, ut.parent_uid FROM users u INNER JOIN users_tree ut ON (u.uid = ut.uid) WHERE u.status = %d";
     $message = $this->alert("fields with different alias", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
 
-    $query = qb_select("users", "u")
+    $query = qb_select()
       ->fields('u', array('name'))
       ->fields('u', array('mail', 'status'))
+      ->from("users", "u")
       ->join("users_tree", "ut", "u.uid = ut.uid")
-      ->condition("u.status", array('%d', 1));
-    $sql = "SELECT u.name, u.mail, u.status FROM users u INNER JOIN users_tree ut ON (u.uid = ut.uid) WHERE ( u.status = %d )";
+      ->where("u.status = %d", array(1));
+    $sql = "SELECT u.name, u.mail, u.status FROM users u INNER JOIN users_tree ut ON (u.uid = ut.uid) WHERE u.status = %d";
     $message = $this->alert("calling fields multiple time with same alias", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
   }
 
   function testLikeOperator() {
-    $query = qb_select("users", "u")
-      ->condition("u.name", "ad%%", "LIKE");
-    $sql = "SELECT * FROM users u WHERE ( u.name LIKE 'ad%%' )";
+    $query = qb_select()
+      ->from("users", "u")
+      ->where("u.name LIKE 'ad%%'");
+    $sql = "SELECT * FROM users u WHERE u.name LIKE 'ad%%'";
     $message = $this->alert("using LIKE operator", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
 
-    $query = qb_select("users", "u")
-      ->condition("u.name", array('%s', "ad%"), "LIKE");
-    $sql = "SELECT * FROM users u WHERE ( u.name LIKE '%s' )";
+    $query = qb_select()
+      ->from("users", "u")
+      ->where("u.name LIKE '%s'", array("ad%"));
+    $sql = "SELECT * FROM users u WHERE u.name LIKE '%s'";
     $message = $this->alert("using LIKE operator with placeholder", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
     $message = "Arguments must be array('ad%')";
@@ -124,13 +139,15 @@ class QBuilderTest extends DrupalUnitTestCase {
   }
 
   function testOrderBy() {
-    $query = qb_select("users", "u")
+    $query = qb_select()
+      ->from("users", "u")
       ->orderBy("u.uid", "DESC");
     $sql = "SELECT * FROM users u ORDER BY u.uid DESC";
     $message = $this->alert("with ORDER BY clause", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
 
-    $query = qb_select("users", "u")
+    $query = qb_select()
+      ->from("users", "u")
       ->orderBy("u.uid", "DESC")
       ->orderBy("u.name");
     $sql = "SELECT * FROM users u ORDER BY u.uid DESC, u.name ASC";
@@ -139,7 +156,8 @@ class QBuilderTest extends DrupalUnitTestCase {
   }
 
   function testExpression() {
-    $query = qb_select("users", "u")
+    $query = qb_select()
+      ->from("users", "u")
       ->fields('u', array('name'))
       ->addExpression("COUNT(u.uid)", "user_count")
       ->groupBy('u.name');
@@ -147,7 +165,8 @@ class QBuilderTest extends DrupalUnitTestCase {
     $message = $this->alert("with COUNT expression", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
 
-    $query = qb_select("users", "u")
+    $query = qb_select()
+      ->from("users", "u")
       ->fields('u', array('name'))
       ->addExpression("length(ut.tree_id) - length(replace(tree_id, '.', ''))", "level")
       ->join("users_tree", "ut", "u.uid = ut.uid");
@@ -157,21 +176,23 @@ class QBuilderTest extends DrupalUnitTestCase {
   }
 
   function testSubSelect() {
-    $members = qb_select("users_view", "uv")
+    $members = qb_select()
       ->fields('uv', array('uid', 'name', 'tree_id'))
+      ->from("users_view", "uv")
       ->addExpression("length(uv.tree_id) - length(replace(uv.tree_id, '.', ''))", "level")
-      ->condition("uv.tree_id", array('%s', '0001.0002.%'), 'LIKE')
-      ->condition("uv.uid", array('%d', 1), '<>')
-      ->condition("uv.status", 1)
+      ->where("uv.tree_id LIKE '%s'", array('0001.0002.%'))
+      ->where("uv.uid <> %d", array(1))
+      ->where("uv.status = 1")
       ->orderBy("uv.tree_id");
 
-    $query = qb_select($members, 'members')
+    $query = qb_select()
       ->fields("members", array("level"))
+      ->from($members, 'members')
       ->addExpression("COUNT(members.uid)", "user_count")
-      ->condition("members.level", array("%d", 2), '<>')
+      ->where("members.level <> %d", array(2))
       ->groupBy("members.level")
       ->orderBy("members.level");
-    $sql = "SELECT members.level, COUNT(members.uid) AS user_count FROM (SELECT uv.uid, uv.name, uv.tree_id, length(uv.tree_id) - length(replace(uv.tree_id, '.', '')) AS level FROM users_view uv WHERE ( uv.tree_id LIKE '%s' ) AND ( uv.uid <> %d ) AND ( uv.status = 1 ) ORDER BY uv.tree_id ASC) members WHERE ( members.level <> %d ) GROUP BY members.level ORDER BY members.level ASC";
+    $sql = "SELECT members.level, COUNT(members.uid) AS user_count FROM (SELECT uv.uid, uv.name, uv.tree_id, length(uv.tree_id) - length(replace(uv.tree_id, '.', '')) AS level FROM users_view uv WHERE uv.tree_id LIKE '%s' AND uv.uid <> %d AND uv.status = 1 ORDER BY uv.tree_id ASC) members WHERE members.level <> %d GROUP BY members.level ORDER BY members.level ASC";
     $message = $this->alert("with sub select and complex expression", $sql, $query->sql());
     $message .= " ". strlen(trim($sql)) . " ". strlen(trim($query->sql()));
     $this->assertEqual(trim($query->sql()), trim($sql), $message);

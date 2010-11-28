@@ -16,77 +16,6 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-class QBuilderCondition {
-    protected $conjunction = 'AND';
-    protected $wheres = array();
-    protected $arguments = array();
-
-    public function __construct($conjunction = 'AND') {
-        $this->conjunction = $conjunction;
-    }
-
-    public function condition($field, $value = NULL, $operator = '=') {
-        if ($field instanceof QBuilderCondition) {
-            $this->wheres[] = $field;
-        }
-        else {
-            if (is_array($value)) {
-                $this->arguments[] = $value[1];
-                $value = $this->formatValue($value[1], $value[0]);
-            }
-            else {
-                $value = $this->formatValue($value);
-            }
-            $this->wheres[] = $field .' '. $operator .' '. "$value";
-        }
-        return $this;
-    }
-
-    public function compile() {
-        $wheres = '';
-        $count = 0;
-        foreach ($this->wheres as $where) {
-            if ($where instanceof QBuilderCondition) {
-                $wheres .= $where->compile();
-            }
-            else {
-                if ($count > 0) {
-                    $wheres .= ' '. $this->conjunction .' '. $where;
-                }
-                else {
-                    $wheres .= ' '. $where;
-                }
-            }
-            $count++;
-        }
-        
-        return ' ('. $wheres .' )';
-    }
-
-    public function get_conjunction() {
-        return $this->conjunction;
-    }
-
-    public function getArguments() {
-        return $this->arguments;
-    }
-
-    protected function formatValue($value, $placeholder = NULL) {
-        $maps = array(
-            '%d' => $placeholder,
-            '%s' => "'$placeholder'",
-        );
-        if ($placeholder) {
-            return $maps[$placeholder];
-        }
-
-        if (is_int($value)) {
-            return $value;
-        }
-        return "'". db_escape_string($value) ."'";
-    }
-}
-
 class QBuilder {
     protected $base_table = '';
     protected $tables = array();
@@ -99,7 +28,7 @@ class QBuilder {
 
     public $name = '';
 
-    public function select($table, $alias = NULL, $options = array()) {
+    public function from($table, $alias = NULL, $options = array()) {
         if ($table instanceof QBuilder) {
             $this->base_table = $table;
             $this->base_table->name = $alias;
@@ -116,7 +45,15 @@ class QBuilder {
         return $this;
     }
 
+    public function select($alias = '*', $fields = array()) {
+      $this->fields($alias, $fields);
+      return $this;
+    }
+
     public function fields($alias, $fields = array()) {
+        if ($alias == '*') {
+            return $this;
+        }
         if (isset($this->fields[$alias])) {
             $this->fields[$alias] = array_merge($this->fields[$alias], $fields);
         }
@@ -169,6 +106,19 @@ class QBuilder {
         return $this;
     }
 
+    public function where($where, $arguments = array()) {
+      if (empty($this->wheres)) {
+        $this->wheres[] = $where;
+      }
+      else {
+        $this->wheres[] = ' AND '. $where;
+      }
+      if (!empty($arguments)) {
+        $this->addArguments($arguments);
+      }
+      return $this;
+    }
+
     public function orderBy($field, $order = 'ASC') {
         $this->order_fields[] = $field .' '. $order;
         return $this;
@@ -180,11 +130,11 @@ class QBuilder {
     }
 
     public function sql() {
-        if (empty($this->fields)) {
-            $fields = '*';
+        if (!empty($this->fields)) {
+            $fields = $this->compileFields();
         }
         else {
-            $fields = $this->compileFields();
+            $fields = '*';
         }
         if ($this->base_table instanceof QBuilder) {
             $table = $this->base_table->sql();
@@ -231,15 +181,9 @@ class QBuilder {
         if (empty($this->wheres)) {
             return '';
         }
-        $wheres = ' WHERE';
-        $count = 0;
+        $wheres = ' WHERE ';
         foreach ($this->wheres as $where) {
-            if ($count > 0) {
-                $wheres .= ' AND'. $where->compile();
-            } else {
-                $wheres .= $where->compile();
-            }
-            $count++;
+          $wheres .= $where;
         }
         return $wheres;
     }
