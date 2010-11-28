@@ -3,9 +3,11 @@ This is a simple query builder that can be used to generate sql query compatible
 Example usage:-
 
 <pre>
-$query = qb_select("users", "u")
+$query = qb_select()
     ->fields("u", array("name", "mail", "status"))
-    ->condition("u.status", 1);
+    ->from("users", "u")
+    ->where("u.name = '%s'", array('root'))
+    ->where("u.status = 1");
 $result = db_query($query->sql(), $query->getArguments());
 </pre>
 
