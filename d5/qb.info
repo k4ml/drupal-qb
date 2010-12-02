@@ -1,0 +1,4 @@
+name = Query Builder
+description = Generic SQL query builder to help in generating dynamic queries.
+core = 5.x
+version = 5.x-0.1-dev
