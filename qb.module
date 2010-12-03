@@ -10,7 +10,7 @@ function qb_autoload($className) {
 spl_autoload_register("qb_autoload");
 
 function qb_select($alias = '*', $fields = array()) {
-  $query = new QBuilder;
+  $query = new DrupalQBuilder;
   $query->select($alias, $fields);
   return $query;
 }
