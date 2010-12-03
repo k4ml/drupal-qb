@@ -167,7 +167,7 @@ class QBuilder {
         foreach ($this->fields as $alias => $fields) {
             foreach ($fields as $field) {
                 if ($alias == 'EXPRESSION') {
-                    $to_select .= $field;
+                    $to_select .= $field .", ";
                     continue;
                 }
                 $to_select .= $alias .".". $field .", ";
