@@ -173,6 +173,16 @@ class QBuilderTest extends DrupalUnitTestCase {
     $sql = "SELECT u.name, length(ut.tree_id) - length(replace(tree_id, '.', '')) AS level FROM users u INNER JOIN users_tree ut ON (u.uid = ut.uid)";
     $message = $this->alert("with complex expression", $sql, $query->sql());
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
+
+    $query = qb_select()
+      ->from("users", "u")
+      ->fields('u', array('name'))
+      ->addExpression("COUNT(u.uid)", "user_count")
+      ->addExpression("SUM(u.uid)", "user_sum")
+      ->groupBy('u.name');
+    $sql = "SELECT u.name, COUNT(u.uid) AS user_count, SUM(u.uid) AS user_sum FROM users u GROUP BY u.name";
+    $message = $this->alert("with multiple expression", $sql, $query->sql());
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
   }
 
   function testSubSelect() {
