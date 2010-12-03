@@ -92,6 +92,12 @@ class QBuilder {
         return $this;
     }
 
+    public function leftJoin($table, $alias, $condition, $arguments = array()) {
+        $this->join($table, $alias, $condition, $arguments);
+        $this->joins[$alias]['type'] = 'LEFT';
+        return $this;
+    }
+
     public function condition($field, $value = NULL, $operator = '=') {
         if ($field instanceof QBuilderCondition) {
             $this->wheres[] = $field;

@@ -87,6 +87,16 @@ class QBuilderTest extends DrupalUnitTestCase {
     $this->assertEqual(trim($query->sql()), trim($sql), $message);
   }
 
+  function testLeftJoin() {
+    $query = qb_select()
+      ->from("users", "u")
+      ->leftJoin("users_tree", "ut", "u.uid = ut.uid")
+      ->where("u.status = %d", array(1));
+    $sql = "SELECT * FROM users u LEFT JOIN users_tree ut ON (u.uid = ut.uid) WHERE u.status = %d";
+    $message = $this->alert("with LEFT JOIN", $sql, $query->sql());
+    $this->assertEqual(trim($query->sql()), trim($sql), $message);
+  }
+
   function alert($message, $expected, $result) {
     return t("Should display valid SQL query") ." ". $message .': '. $expected .' Display instead: '. $result;
   }
