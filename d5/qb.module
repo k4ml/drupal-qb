@@ -1,0 +1,20 @@
+<?php
+
+function qb_autoload($className) {
+  $path = realpath(drupal_get_path('module', 'qb') .'/../');
+  $fileName = $path .'/'. $className .'.class.php';
+  if (file_exists($fileName)) {
+    require $fileName;
+  }
+}
+spl_autoload_register("qb_autoload");
+
+function qb_select($alias = '*', $fields = array()) {
+  $query = new QBuilder;
+  $query->select($alias, $fields);
+  return $query;
+}
+
+function qb_or() {
+    return new QBuilderCondition('OR');
+}
