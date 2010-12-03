@@ -64,7 +64,13 @@ class QBuilder {
     }
 
     public function addExpression($expression, $alias) {
-        $expression = $expression ." AS ". $alias;
+        if ($expression instanceof QBuilder) {
+            $this->addArguments($expression->getArguments());
+            $expression = ' ('. $expression->sql() .') AS '. $alias;
+        }
+        else {
+            $expression = $expression ." AS ". $alias;
+        }
         $this->fields('EXPRESSION', array($expression));
         return $this;
     }
